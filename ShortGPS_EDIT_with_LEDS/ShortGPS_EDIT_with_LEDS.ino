@@ -28,6 +28,7 @@ SoftwareSerial gpsPort(ARDUINO_GPS_TX, ARDUINO_GPS_RX); // Create a SoftwareSeri
 const float targetLat = 55.9456;
 const float targetLng = -3.1995;
 //--------------------------------------------------------
+float distance = 0;
 void setup()
 {
   //LEDS//--------------------------------------------------
@@ -48,6 +49,6 @@ void loop()
   updateGPS();
 
   //LEDS//--------------------------------------------------
-  displayLED();
+  displayLED(distance); // You need to add the arguement in here
 }
 //--------------------------------------------------------
