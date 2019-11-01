@@ -74,6 +74,7 @@ void printAttitude(float ax, float ay, float az, float mx, float my, float mz)
   float roll = atan2(ay, az);
   float pitch = atan2(-ax, sqrt(ay * ay + az * az));
   float heading;
+  
   if (my == 0)
     heading = (mx < 0) ? PI : 0;
   else
@@ -90,6 +91,39 @@ void printAttitude(float ax, float ay, float az, float mx, float my, float mz)
   heading *= 180.0 / PI;
   pitch *= 180.0 / PI;
   roll  *= 180.0 / PI;
+
+
+  printCompassDirection(heading + 180.0);
+}
+//------------------------------------------------------------------------------
+void printTiltCompensatedHeading(float ax, float ay, float az, float mx, float my, float mz)
+{
+  float roll = atan2(ay, az);
+  float pitch = atan2(-ax, sqrt(ay * ay + az * az));
+  float cosRoll = cos(roll);
+  float sinRoll = sin(roll);
+  float cosPitch = cos(pitch);
+  float sinPitch = sin(pitch);
+
+  float Xh = mx * cosPitch + mz * sinPitch;
+  float Yh = mx * sinRoll * sinPitch + my * cosRoll - mz * sinRoll * cosPitch;
+
+  float heading;
+
+  if (my == 0)
+    heading = (mx < 0) ? PI : 0;
+  else
+    heading = atan2(Yh, Xh);
+
+  heading -= DECLINATION * PI / 180;
+
+  if (heading > PI)
+    heading -= (2 * PI);
+  else if (heading < -PI)
+    heading += (2 * PI);
+
+  // Convert everything from radians to degrees:
+  heading *= 180.0 / PI;
 
   printCompassDirection(heading + 180.0);
 }
