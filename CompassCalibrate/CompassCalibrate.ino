@@ -47,16 +47,7 @@ void setupSensor()
 void setup()
 {
   Serial.begin(115200);
-
   while (!Serial);
-
-  if (!lsm.begin())
-  {
-    Serial.println("Oops ... unable to initialize the LSM9DS1. Check your wiring!");
-    while (1);
-  }
-  Serial.println("Found LSM9DS1 9DOF");
-
   setupSensor();
   if (calibrationMode)
   {
@@ -98,9 +89,9 @@ void printAlternateHeading(float mx, float my)
 {
   float D = atan2(mx , my) * radToDegCoef;
   Serial.println(D, 2);
- 
+
 //  float heading = map(D,-180, 180, 0, 360);
-//  Serial.println(heading);  
+//  Serial.println(heading);
 }
 //------------------------------------------------------------------------------
 void printCompassDirection(float heading)

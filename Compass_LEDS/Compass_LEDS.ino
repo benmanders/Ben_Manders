@@ -1,36 +1,98 @@
 #include <Adafruit_NeoPixel.h>
-#ifdef __AVR__
-#include <avr/power.h>
-#endif
-#define PIN            10
-#define NUMPIXELS      8
-
+#include <Wire.h>
+#include <SPI.h>
+#include <Adafruit_LSM9DS1.h>
+#include <Adafruit_Sensor.h>
+//------------------------------------------------------------------------------
+const int PIN =            10;
+const int NUMPIXELS =      8;
 Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
+//------------------------------------------------------------------------------
+Adafruit_LSM9DS1 lsm = Adafruit_LSM9DS1();
+#define LSM9DS1_SCK A5
+#define LSM9DS1_MISO 12
+#define LSM9DS1_MOSI A4
+#define LSM9DS1_XGCS 6
+#define LSM9DS1_MCS 5
+float offsetX = -0.139;
+float offsetY = 0.25;
+float offsetZ = -0.128;
+constexpr float radToDegCoef = (180.0f / 3.1415963f);
+//------------------------------------------------------------------------------
+void setupSensor()
+{
+  if (!lsm.begin())
+  {
+    Serial.println("Oops ... unable to initialize the LSM9DS1. Check your wiring!");
+    while (1);
+  }
+  Serial.println("Found LSM9DS1 9DOF");
 
-int delayval = 500; // delay for half a second
-
-void setup() {
-  // This is for Trinket 5V 16MHz, you can remove these three lines if you are not using a Trinket
-#if defined (__AVR_ATtiny85__)
-  if (F_CPU == 16000000) clock_prescale_set(clock_div_1);
-#endif
-  // End of trinket special code
-
+  lsm.setupAccel(lsm.LSM9DS1_ACCELRANGE_2G); // 1.) Set the accelerometer range
+  lsm.setupMag(lsm.LSM9DS1_MAGGAIN_16GAUSS);   // 2.) Set the magnetometer sensitivity
+  lsm.setupGyro(lsm.LSM9DS1_GYROSCALE_245DPS);   // 3.) Setup the gyroscope
+}
+//------------------------------------------------------------------------------
+void setup()
+{
+  Serial.begin(115200);
+  while (!Serial);
+  setupSensor();
   pixels.begin(); // This initializes the NeoPixel library.
 }
+//------------------------------------------------------------------------------
+void loop()
+{
+  lsm.read();
+  sensors_event_t a, m, g, temp;
+  lsm.getEvent(&a, &m, &g, &temp);
 
-void loop() {
-
-  // For a set of NeoPixels the first NeoPixel is 0, second is 1, all the way up to the count of pixels minus one.
-
-  for(int i=0;i<NUMPIXELS;i++){
-
-    // pixels.Color takes RGB values, from 0,0,0 up to 255,255,255
-    pixels.setPixelColor(i, pixels.Color(0,150,0)); // Moderately bright green color.
-
-    pixels.show(); // This sends the updated pixel color to the hardware.
-
-    delay(delayval); // Delay for a period of time (in milliseconds).
-
+  pixels.setPixelColor(0, pixels.Color(0,150,0));
+  pixels.show();
+}
+//------------------------------------------------------------------------------
+float getHeading(float mx, float my)
+{
+  float D = atan2(mx , my) * radToDegCoef;
+  return D;
+}
+//------------------------------------------------------------------------------
+void setPixelToCompassDirection(float heading)
+{
+  pixels.clear();
+  int pixelIndex = 0;
+  if (heading > 337.25 || heading < 22.5)
+  {
+    pixelIndex = 0;
   }
+  else if (heading > 292.5 && heading < 337.25)
+  {
+    pixelIndex = 1;
+  }
+  else if (heading > 247.5 && heading < 292.5)
+  {
+    pixelIndex = 2;
+  }
+  else if (heading > 202.5 && heading < 292.5)
+  {
+    pixelIndex = 3;
+  }
+  else if (heading > 157.5 && heading < 202.5)
+  {
+    pixelIndex = 4;
+  }
+  else if (heading > 112.5 && heading < 157.5)
+  {
+    pixelIndex = 5;
+  }
+  else if (heading > 67.5 && heading < 112.5)
+  {
+    pixelIndex = 6;
+  }
+  else if (heading > 22.5 && heading < 67.5)
+  {
+    pixelIndex = 7;
+  }
+  pixels.setPixelColor(pixelIndex, pixels.Color(0,150,0));
+  pixels.show();
 }
