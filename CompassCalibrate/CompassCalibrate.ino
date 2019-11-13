@@ -6,15 +6,15 @@
 #include <Adafruit_LSM9DS1.h>
 #include <Adafruit_Sensor.h>
 //------------------------------------------------------------------------------
-Adafruit_LSM9DS1 lsm = Adafruit_LSM9DS1();
-//------------------------------------------------------------------------------
 #define LSM9DS1_SCK A5
-#define LSM9DS1_MISO 12
+//#define LSM9DS1_MISO 12
 #define LSM9DS1_MOSI A4
-#define LSM9DS1_XGCS 6
-#define LSM9DS1_MCS 5
+//#define LSM9DS1_XGCS 6
+//#define LSM9DS1_MCS 5
 //------------------------------------------------------------------------------
 const bool calibrationMode = false;
+//------------------------------------------------------------------------------
+Adafruit_LSM9DS1 lsm = Adafruit_LSM9DS1();
 //float offsetX = 0.034;
 //float offsetY = 0.225;
 //float offsetZ = 0.155;
@@ -39,6 +39,12 @@ const float radToDegCoef = (180.0f / 3.1415963f);
 //------------------------------------------------------------------------------
 void setupSensor()
 {
+    if (!lsm.begin())
+  {
+    Serial.println("Oops ... unable to initialize the LSM9DS1. Check your wiring!");
+    while (1);
+  }
+  Serial.println("FOUND LSM9DS1 9DOF!");
   lsm.setupAccel(lsm.LSM9DS1_ACCELRANGE_2G); // 1.) Set the accelerometer range
   lsm.setupMag(lsm.LSM9DS1_MAGGAIN_16GAUSS);   // 2.) Set the magnetometer sensitivity
   lsm.setupGyro(lsm.LSM9DS1_GYROSCALE_245DPS);   // 3.) Setup the gyroscope
@@ -46,14 +52,15 @@ void setupSensor()
 //------------------------------------------------------------------------------
 void setup()
 {
-  Serial.begin(115200);
+  Serial.begin(9600);
   while (!Serial);
+  Serial.println("test");
   setupSensor();
-  if (calibrationMode)
-  {
-    calibrateMagnetometer(5000);
-    while (1);
-  }
+//  if (calibrationMode)
+//  {
+//    calibrateMagnetometer(5000);
+//    while (1);
+//  }
 }
 
 void loop()

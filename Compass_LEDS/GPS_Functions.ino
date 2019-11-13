@@ -25,7 +25,19 @@ void updateGPS()
 
   }
 }
-
+float getTargetHeading()
+{
+  static float lastHeading = 0.0f;
+  if (tinyGPS.location.isUpdated())
+  {
+    float lng = tinyGPS.location.lng();
+    float lat = tinyGPS.location.lat();
+    //      float heading = atan2(lng - targetLng, lat - targetLat) * piToDegrees;
+    lastHeading = getHeadingDegrees(lat, lng, targetLat, targetLng);
+//    distance = distanceBetweenPoints(lat, lng, targetLat, targetLng); // this is no global
+  }
+  return lastHeading + 180.0f;
+}
 float distanceBetweenPoints(float currLat, float currLng, float tarLat, float tarLng)
 {
   const static float radiusOfEarth = 6371.0f;

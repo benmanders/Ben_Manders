@@ -72,16 +72,19 @@ void loop()
   {
     tinyGPS.encode(gpsPort.read());
   }
-  float ourHeading =  180.0f;
-  // float ourHeading =  getHeading(m.magnetic.x-offsetX, m.magnetic.y-offsetY);
-  float targetHeading = 0.0f; // get heading from GPS
-  // float targetHeading = getTargetHeading(); // get heading from GPS
+  //float ourHeading =  180.0f;
+  float ourHeading =  getHeading(m.magnetic.x-offsetX, m.magnetic.y-offsetY);
+//  float targetHeading = 0.0f; // get heading from GPS
+  float targetHeading = getTargetHeading(); // get heading from GPS
+
+Serial.print("Heading ");
+Serial.println(targetHeading);
 
   pixels.clear();
-  setNorthPixel(ourHeading);
+//  setNorthPixel(ourHeading);
   setPixelToCompassDirection(ourHeading, pixels.Color(0,0,50));
   setPixelToCompassDirection(getHeadingDiff(ourHeading, targetHeading), pixels.Color(0,150,0));
-  Serial.println(getHeading(m.magnetic.x-offsetX, m.magnetic.y-offsetY));
+//  Serial.println(getHeadingDiff(ourHeading, targetHeading));
 
   pixels.show();
   delay(100);
@@ -140,13 +143,7 @@ void setPixelToCompassDirection(float heading, uint32_t colour)
 float getHeadingDiff(float ourHeading,float otherHeading)
 {
   float diff = ourHeading - otherHeading;
-  float headDiff = 360 - abs(diff);
-
-  float newHeading =  (diff > 0) ? ourHeading + headDiff : ourHeading - headDiff;
-  newHeading = (newHeading > 360) ? (360 - newHeading) : newHeading;
-  newHeading = (newHeading < 0 )? (360 + newHeading) : newHeading;
-
-  return newHeading;
+  return (diff < 0) ? 360 - abs(diff) : diff;
 }
 
 
