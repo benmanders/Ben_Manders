@@ -47,8 +47,9 @@ void loop()
   sensors_event_t a, m, g, temp;
   lsm.getEvent(&a, &m, &g, &temp);
 
-  pixels.setPixelColor(0, pixels.Color(0,150,0));
-  pixels.show();
+  setPixelToCompassDirection(getHeading(m.magnetic.x-offsetX, m.magnetic.y-offsetY));
+  Serial.println(getHeading(m.magnetic.x-offsetX, m.magnetic.y-offsetY));
+  delay(100);
 }
 //------------------------------------------------------------------------------
 float getHeading(float mx, float my)
