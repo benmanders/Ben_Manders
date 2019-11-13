@@ -1,3 +1,5 @@
+## OLD LSM9DS1
+
 Found LSM9DS1 9DOF
 Let's Start Calibrating
 Offsets:
@@ -13,3 +15,25 @@ Let's Start Calibrating
 Offsets:
 X 		 Y 		 Z
 0.029		0.221		0.155
+Found LSM9DS1 9DOF
+
+## NEW LSM9DS1
+Let's Start Calibrating
+Offsets:
+X 		 Y 		 Z
+-0.130		0.251		-0.093
+Scales:
+X 		 Y 		 Z
+0.397		0.398		0.383
+
+Found LSM9DS1 9DOF
+Let's Start Calibrating
+Offsets:
+X 		 Y 		 Z
+-0.139		0.248		-0.128
+Scales:
+X 		 Y 		 Z
+0.410		0.414		0.451
+Normalising:
+X 		 Y 		 Z
+1.000		1.000		1.000
