@@ -7,6 +7,7 @@
 const int PIN =            10;
 const int NUMPIXELS =      8;
 Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
+
 //------------------------------------------------------------------------------
 Adafruit_LSM9DS1 lsm = Adafruit_LSM9DS1();
 #define LSM9DS1_SCK A5
@@ -47,21 +48,32 @@ void loop()
   sensors_event_t a, m, g, temp;
   lsm.getEvent(&a, &m, &g, &temp);
 
-  setPixelToCompassDirection(getHeading(m.magnetic.x-offsetX, m.magnetic.y-offsetY));
+  float ourHeading getHeading(m.magnetic.x-offsetX, m.magnetic.y-offsetY);
+  float otherHeading = 0; // get heading from GPS
+
+  pixels.clear();
+  setNorthPixel();
+  setPixelToCompassDirection(ourHeading, pixels.Color(0,0,50));
+  setPixelToCompassDirection(getHeadingDiff(ourHeading, otherHeading), pixels.Color(0,150,0));
   Serial.println(getHeading(m.magnetic.x-offsetX, m.magnetic.y-offsetY));
+
+  pixels.show();
   delay(100);
 }
 //------------------------------------------------------------------------------
 float getHeading(float mx, float my)
 {
   float D = atan2(mx , my) * radToDegCoef;
-  return D;
+  return D + 180.0f;
 }
 //------------------------------------------------------------------------------
-void setPixelToCompassDirection(float heading)
+void setPixelToCompassDirection(float heading, uint32_t colour)
 {
-  pixels.clear();
   int pixelIndex = 0;
+
+  // int roundHeading = (int)heading;
+  // roundHeading = map(roundHeading, 0, 337,0,7) % 7;
+
   if (heading > 337.25 || heading < 22.5)
   {
     pixelIndex = 0;
@@ -94,6 +106,25 @@ void setPixelToCompassDirection(float heading)
   {
     pixelIndex = 7;
   }
-  pixels.setPixelColor(pixelIndex, pixels.Color(0,150,0));
-  pixels.show();
+  pixels.setPixelColor(pixelIndex, color);
+
+}
+
+
+float getHeadingDiff(float ourHeading,float otherHeading)
+{
+  float diff = ourHeading - otherHeading;
+  float headDiff = 360 - abs(diff);
+
+  float newHeading =  (diff > 0) ? ourHeading + headDiff : ourHeading - headDiff;
+  newHeading = (newHeading > 360) ? (360 - newHeading) : newHeading;
+  newHeading = (newHeading < 0 )? (360 + newHeading) : newHeading;
+
+  return newHeading;
+}
+
+
+void setNorthPixel()
+{
+  setPixelToCompassDirection(getHeadingDiff(0.0f,ourHeading), pixels.Color(150,150,0));
 }
