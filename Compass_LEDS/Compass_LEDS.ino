@@ -3,23 +3,42 @@
 #include <SPI.h>
 #include <Adafruit_LSM9DS1.h>
 #include <Adafruit_Sensor.h>
+#include <SPI.h>
+#include <SD.h>
+#include <TinyGPS++.h>
+#include <SoftwareSerial.h>
 //------------------------------------------------------------------------------
-const int PIN =            10;
-const int NUMPIXELS =      8;
+const int PIN = 10;
+const int NUMPIXELS = 8;
 Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
-
 //------------------------------------------------------------------------------
 Adafruit_LSM9DS1 lsm = Adafruit_LSM9DS1();
 #define LSM9DS1_SCK A5
-#define LSM9DS1_MISO 12
+// #define LSM9DS1_MISO 12
 #define LSM9DS1_MOSI A4
-#define LSM9DS1_XGCS 6
-#define LSM9DS1_MCS 5
+// #define LSM9DS1_XGCS 6
+// #define LSM9DS1_MCS 5
 float offsetX = -0.139;
 float offsetY = 0.25;
 float offsetZ = -0.128;
 constexpr float radToDegCoef = (180.0f / 3.1415963f);
-//------------------------------------------------------------------------------
+//--------------------------------------------------------
+const int gpsUpdateRate = 5000; // Log every 5 seconds
+unsigned long lastLog = 0; // Global var to keep of last time we logged
+const float piToDegrees = 3.1415963 / 180.0f;
+//--------------------------------------------------------
+// TinyGPS Definitions
+TinyGPSPlus tinyGPS; // tinyGPSPlus object to be used throughout
+const int GPS_BAUD = 9600; // GPS module's default baud rate
+//--------------------------------------------------------
+// GPS Serial Port Definitions //
+const int ARDUINO_GPS_RX = 9; // GPS TX, Arduino RX pin
+const int ARDUINO_GPS_TX = 8; // GPS RX, Arduino TX pin
+SoftwareSerial gpsPort(ARDUINO_GPS_TX, ARDUINO_GPS_RX); // Create a SoftwareSerial
+//--------------------------------------------------------
+const float targetLat = 55.9456;
+const float targetLng = -3.1995;
+//--------------------------------------------------------
 void setupSensor()
 {
   if (!lsm.begin())
@@ -39,6 +58,7 @@ void setup()
   Serial.begin(115200);
   while (!Serial);
   setupSensor();
+  gpsPort.begin(GPS_BAUD);
   pixels.begin(); // This initializes the NeoPixel library.
 }
 //------------------------------------------------------------------------------
@@ -48,13 +68,19 @@ void loop()
   sensors_event_t a, m, g, temp;
   lsm.getEvent(&a, &m, &g, &temp);
 
-  float ourHeading getHeading(m.magnetic.x-offsetX, m.magnetic.y-offsetY);
-  float otherHeading = 0; // get heading from GPS
+  while (gpsPort.available())
+  {
+    tinyGPS.encode(gpsPort.read());
+  }
+  float ourHeading =  180.0f;
+  // float ourHeading =  getHeading(m.magnetic.x-offsetX, m.magnetic.y-offsetY);
+  float targetHeading = 0.0f; // get heading from GPS
+  // float targetHeading = getTargetHeading(); // get heading from GPS
 
   pixels.clear();
-  setNorthPixel();
+  setNorthPixel(ourHeading);
   setPixelToCompassDirection(ourHeading, pixels.Color(0,0,50));
-  setPixelToCompassDirection(getHeadingDiff(ourHeading, otherHeading), pixels.Color(0,150,0));
+  setPixelToCompassDirection(getHeadingDiff(ourHeading, targetHeading), pixels.Color(0,150,0));
   Serial.println(getHeading(m.magnetic.x-offsetX, m.magnetic.y-offsetY));
 
   pixels.show();
@@ -106,7 +132,7 @@ void setPixelToCompassDirection(float heading, uint32_t colour)
   {
     pixelIndex = 7;
   }
-  pixels.setPixelColor(pixelIndex, color);
+  pixels.setPixelColor(pixelIndex, colour);
 
 }
 
@@ -124,7 +150,7 @@ float getHeadingDiff(float ourHeading,float otherHeading)
 }
 
 
-void setNorthPixel()
+void setNorthPixel(float ourHeading)
 {
   setPixelToCompassDirection(getHeadingDiff(0.0f,ourHeading), pixels.Color(150,150,0));
 }
