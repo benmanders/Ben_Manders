@@ -6,7 +6,27 @@
 #include <SPI.h>
 #include <SD.h>
 #include <TinyGPS++.h>
-#include <SoftwareSerial.h>
+//#include <SoftwareSerial.h>
+//------------------------------------------------------------------------------
+#include <Arduino.h>   // required before wiring_private.h
+#include "wiring_private.h" // pinPeripheral() function
+
+Uart Serial2 (&sercom1, 11, 10, SERCOM_RX_PAD_0, UART_TX_PAD_2);
+void SERCOM1_Handler()
+{
+  Serial2.IrqHandler();
+}
+//------------------------------------------------------------------------------
+#include "ThingSpeak.h"
+#include <SPI.h>
+#include <WiFi101.h>
+
+char ssid[] = "Ben Manders iPhone";     //  your network SSID (name) 
+char pass[] = "benmanders19";   // your network password
+WiFiClient  client; 
+
+unsigned long myChannelNumber = 917504; //Put your channel number in here
+const char * myWriteAPIKey = "M28IML2BN9W8LV43"; //Put your API key in here
 //------------------------------------------------------------------------------
 const int PIN = 10;
 const int NUMPIXELS = 16;
@@ -29,12 +49,12 @@ const float piToDegrees = 3.1415963 / 180.0f;
 //--------------------------------------------------------
 // TinyGPS Definitions
 TinyGPSPlus tinyGPS; // tinyGPSPlus object to be used throughout
-const int GPS_BAUD = 9600; // GPS module's default baud rate
+const int GPS_BAUD = 4800; // GPS module's default baud rate
 //--------------------------------------------------------
 // GPS Serial Port Definitions //
 const int ARDUINO_GPS_RX = 9; // GPS TX, Arduino RX pin
 const int ARDUINO_GPS_TX = 8; // GPS RX, Arduino TX pin
-SoftwareSerial gpsPort(ARDUINO_GPS_TX, ARDUINO_GPS_RX); // Create a SoftwareSerial
+//SoftwareSerial Serial2(ARDUINO_GPS_TX, ARDUINO_GPS_RX); // Create a SoftwareSerial
 //--------------------------------------------------------
 const float targetLat = 55.9456;
 const float targetLng = -3.1995;
@@ -55,11 +75,26 @@ void setupSensor()
 //------------------------------------------------------------------------------
 void setup()
 {
-  Serial.begin(115200);
+  Serial.begin(4800);
+  Serial2.begin(4800);
   while (!Serial);
+  WiFi.setPins(8,7,4,2); // Setup the WiFi on the Feather boards
+  /* Start the WiFi connection */
+  Serial.println("Starting..."); 
+  Serial.println("Connecting to WiFi");  
+  int conn = WiFi.begin(ssid, pass);
+  if( conn == WL_CONNECTED )        { Serial.println("OK!");}
+  else if( conn == WL_IDLE_STATUS ) {Serial.println("Idle");}
+  else                              {Serial.println("Unknown response");}
+  /* Now connect to ThingSpeak */
+  ThingSpeak.begin(client);
+  Serial.println("Started");
   setupSensor();
-  gpsPort.begin(GPS_BAUD);
+  Serial2.begin(GPS_BAUD);
   pixels.begin(); // This initializes the NeoPixel library.
+  // Assign pins 10 & 11 SERCOM functionality
+  pinPeripheral(10, PIO_SERCOM);
+  pinPeripheral(11, PIO_SERCOM);
 }
 //------------------------------------------------------------------------------
 void loop()
@@ -68,9 +103,9 @@ void loop()
   sensors_event_t a, m, g, temp;
   lsm.getEvent(&a, &m, &g, &temp);
 
-  while (gpsPort.available())
+  while (Serial2.available())
   {
-    tinyGPS.encode(gpsPort.read());
+    tinyGPS.encode(Serial2.read());
   }
   //float ourHeading =  180.0f;
   float ourHeading =  getHeading(m.magnetic.x - offsetX, m.magnetic.y - offsetY);
@@ -85,9 +120,14 @@ void loop()
   //  setPixelToCompassDirection(ourHeading, pixels.Color(0,0,50));
   setPixelToCompassDirection(getHeadingDiff(ourHeading, targetHeading), pixels.Color(0, 120, 50));
   Serial.println(getHeadingDiff(ourHeading, targetHeading));
-
+  
   pixels.show();
   delay(1000);
+
+//  ThingSpeak.setField(1,(tinyGPS.location.lng());
+//  ThingSpeak.setField(2,(float) lat);
+//  int resp = ThingSpeak.writeFields(myChannelNumber, myWriteAPIKey);
+  
 }
 //------------------------------------------------------------------------------
 float getHeading(float mx, float my)
