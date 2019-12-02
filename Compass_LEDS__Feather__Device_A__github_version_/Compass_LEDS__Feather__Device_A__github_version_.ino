@@ -20,15 +20,15 @@ void SERCOM1_Handler()
 #include "ThingSpeak.h"
 #include <SPI.h>
 #include <WiFi101.h>
-
-char ssid[] = "HANABI";     //  your network SSID (name) 
-char pass[] = "lowernorwood";   // your network password
-WiFiClient  client; 
-
-unsigned long myChannelNumber = 917504; //Put your channel number in here
+char ssid[] = "...";     //  your network SSID (name)
+char pass[] = "...";   // your network password
+WiFiClient  client;
+unsigned long WriteChannelNumber = 917504; //Put your channel number in here
+unsigned long ReadChannelNumber = 922828; //Put your channel number in here
 const char * myWriteAPIKey = "M28IML2BN9W8LV43"; //Put your API key in here
+const char * myReadAPIKey = "LFCH9YTT7FBP61DW"; //Put your API key in here
 //------------------------------------------------------------------------------
-const int PIN = 10;
+const int PIN = 12;
 const int NUMPIXELS = 16;
 Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 //------------------------------------------------------------------------------
@@ -56,8 +56,8 @@ const int ARDUINO_GPS_RX = 9; // GPS TX, Arduino RX pin
 const int ARDUINO_GPS_TX = 8; // GPS RX, Arduino TX pin
 //SoftwareSerial Serial2(ARDUINO_GPS_TX, ARDUINO_GPS_RX); // Create a SoftwareSerial
 //--------------------------------------------------------
-const float targetLat = 55.9456;
-const float targetLng = -3.1995;
+float targetLat = 55.9456;
+float targetLng = -3.1995;
 //--------------------------------------------------------
 void setupSensor()
 {
@@ -78,14 +78,20 @@ void setup()
   Serial.begin(4800);
   Serial2.begin(4800);
   while (!Serial);
-  WiFi.setPins(8,7,4,2); // Setup the WiFi on the Feather boards
+  WiFi.setPins(8, 7, 4, 2); // Setup the WiFi on the Feather boards
   /* Start the WiFi connection */
-  Serial.println("Starting..."); 
-  Serial.println("Connecting to WiFi");  
+  Serial.println("Starting...");
+  Serial.println("Connecting to WiFi");
   int conn = WiFi.begin(ssid, pass);
-  if( conn == WL_CONNECTED )        { Serial.println("OK!");}
-  else if( conn == WL_IDLE_STATUS ) {Serial.println("Idle");}
-  else                              {Serial.println("Unknown response");}
+  if ( conn == WL_CONNECTED )        {
+    Serial.println("OK!");
+  }
+  else if ( conn == WL_IDLE_STATUS ) {
+    Serial.println("Idle");
+  }
+  else                              {
+    Serial.println("Unknown response");
+  }
   /* Now connect to ThingSpeak */
   ThingSpeak.begin(client);
   Serial.println("Started");
@@ -120,10 +126,11 @@ void loop()
   //  setPixelToCompassDirection(ourHeading, pixels.Color(0,0,50));
   setPixelToCompassDirection(getHeadingDiff(ourHeading, targetHeading), pixels.Color(0, 120, 50));
   Serial.println(getHeadingDiff(ourHeading, targetHeading));
-  
+
   pixels.show();
   delay(1000);
   updateThingspeak();
+  readThingspeak();
 }
 //------------------------------------------------------------------------------
 float getHeading(float mx, float my)
@@ -179,15 +186,11 @@ void setPixelToCompassDirection(float heading, uint32_t colour)
   Serial.print(" & ");
   Serial.println((2 * pixelIndex) + 1);
 }
-
-
 float getHeadingDiff(float ourHeading, float otherHeading)
 {
   float diff = ourHeading - otherHeading;
   return (diff < 0) ? 360 - abs(diff) : diff;
 }
-
-
 void setNorthPixel(float ourHeading)
 {
   setPixelToCompassDirection(getHeadingDiff(0.0f, ourHeading), pixels.Color(150, 150, 0));
