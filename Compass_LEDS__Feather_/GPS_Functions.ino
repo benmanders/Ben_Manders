@@ -4,26 +4,15 @@ void updateGPS()
   {
     if (tinyGPS.location.isUpdated())
     {
-      float lng = tinyGPS.location.lng();
-      float lat = tinyGPS.location.lat();
-      //      float heading = atan2(lng - targetLng, lat - targetLat) * piToDegrees;
-      float heading = getHeadingDegrees(lat, lng, targetLat, targetLng);
-      float distance = distanceBetweenPoints(lat, lng, targetLat, targetLng); // this is no global
+      lng = tinyGPS.location.lng(); // currentLng;
+      lat = currentLat;// currentLat;
+    }
+    else // If GPS data isn't valid
+    {
 
-      Serial.print(lat, 4);
-      Serial.print(" , ");
-      Serial.print(lng, 4);
-      Serial.println(" , ");
-      Serial.print(distance, 4);
-      Serial.println(" , ");
-      Serial.println(heading, 4);
-      Serial.println(" ... ");
     }
   }
-  else // If GPS data isn't valid
-  {
 
-  }
 }
 float getTargetHeading()
 {
@@ -31,10 +20,10 @@ float getTargetHeading()
   if (tinyGPS.location.isUpdated())
   {
     float lng = tinyGPS.location.lng();
-    float lat = tinyGPS.location.lat();
+    float lat = currentLat;
     //      float heading = atan2(lng - targetLng, lat - targetLat) * piToDegrees;
     lastHeading = getHeadingDegrees(lat, lng, targetLat, targetLng);
-//    distance = distanceBetweenPoints(lat, lng, targetLat, targetLng); // this is no global
+    //    distance = distanceBetweenPoints(lat, lng, targetLat, targetLng); // this is no global
   }
   return lastHeading + 180.0f;
 }
@@ -44,8 +33,8 @@ float distanceBetweenPoints(float currLat, float currLng, float tarLat, float ta
   float dLat = deg2rad(currLat - tarLat);
   float dLng = deg2rad(currLng - tarLng);
   float a = (sin(dLat / 2) * sin(dLat / 2))
-  + ((sin(dLng / 2) * sin(dLng / 2))
-  * (cos(deg2rad(currLat)) * cos(deg2rad(tarLat))));
+            + ((sin(dLng / 2) * sin(dLng / 2))
+               * (cos(deg2rad(currLat)) * cos(deg2rad(tarLat))));
   float c = 2 * atan2(sqrt(a), sqrt(1 - a));
   float distanceKm = c * radiusOfEarth;
   return distanceKm;
