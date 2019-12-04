@@ -1,22 +1,23 @@
-void updateGPS()
+void updateThisLatLng()
 {
   if ((lastLog + gpsUpdateRate) < millis())
   {
     if (tinyGPS.location.isUpdated())
     {
-      lng = tinyGPS.location.lng();
-      lat = tinyGPS.location.lat();      
+      thisLng = tinyGPS.location.lng();
+      thisLat = tinyGPS.location.lat();
+    }
+    else // If GPS data isn't valid
+    {
+
     }
   }
-  else // If GPS data isn't valid
-  {
 
-  }
 }
 
-float getTargetHeading()
-{  
-  return getHeadingDegrees(lat, lng, targetLat, targetLng) + 180.0f;
+float getTargetHeading(float lat1, float lng1, float lat2, float lng2)
+{
+  return getHeadingDegrees(lat1, lng1, lat2, lng2) + 180.0f;
 }
 
 float distanceBetweenPoints(float currLat, float currLng, float tarLat, float tarLng)
