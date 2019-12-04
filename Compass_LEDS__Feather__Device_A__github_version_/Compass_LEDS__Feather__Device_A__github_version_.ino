@@ -52,8 +52,8 @@ const int ARDUINO_GPS_TX = 8; // GPS RX, Arduino TX pin
 //--------------------------------------------------------
 float targetLat = 55.9456;
 float targetLng = -3.1995;
-float lng = 0;
-float lat = 0;
+float thisLat = 55.9456;
+float thisLng = -3.1995;
 //------------------------------------------------------------------------------
 void setup()
 {
@@ -76,14 +76,15 @@ void loop()
   {
     tinyGPS.encode(Serial2.read());
   }
-  updateGPS();
+  updateThisLatLng();
+  updateTargetLatLng();
   //--------------------------------------------------------------------------
   // 9DOF
   lsm.read();
   sensors_event_t a, m, g, temp;
   lsm.getEvent(&a, &m, &g, &temp);
   float ourHeading =  getHeading(m.magnetic.x - offsetX, m.magnetic.y - offsetY);
-  float targetHeading = getTargetHeading();
+  float targetHeading = getTargetHeading(thisLat, thisLng, targetLat, targetLng);
   //--------------------------------------------------------------------------
   // NeoPixels
   pixels.clear();
@@ -92,7 +93,6 @@ void loop()
   //--------------------------------------------------------------------------
   // ThingSpeak
   updateThingspeak();
-  readThingspeak();
   //--------------------------------------------------------------------------
   delay(1000);
 }
