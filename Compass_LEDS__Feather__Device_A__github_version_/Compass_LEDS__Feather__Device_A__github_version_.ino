@@ -57,15 +57,14 @@ float thisLng = -3.1995;
 //------------------------------------------------------------------------------
 void setup()
 {
-  Serial.begin(4800);
-  Serial2.begin(4800);
-  ThingSpeak.begin(client);
-  setupSensor();
-  Serial2.begin(GPS_BAUD);
-  pixels.begin(); // This initializes the NeoPixel library.
-
   pinPeripheral(10, PIO_SERCOM); // Assign pins 10 & 11 SERCOM functionality
   pinPeripheral(11, PIO_SERCOM);
+  Serial.begin(GPS_BAUD);
+  Serial2.begin(GPS_BAUD);
+  
+  ThingSpeak.begin(client);
+  setupSensor();
+  pixels.begin(); // This initializes the NeoPixel library.
 }
 //------------------------------------------------------------------------------
 void loop()
