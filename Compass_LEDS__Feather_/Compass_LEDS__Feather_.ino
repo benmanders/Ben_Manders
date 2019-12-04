@@ -11,6 +11,8 @@
 #include <Arduino.h>   // required before wiring_private.h
 #include "wiring_private.h" // pinPeripheral() function
 
+bool DEBUG_MODE = false;
+
 Uart Serial2 (&sercom1, 11, 10, SERCOM_RX_PAD_0, UART_TX_PAD_2);
 void SERCOM1_Handler()
 {
@@ -21,9 +23,9 @@ void SERCOM1_Handler()
 #include <SPI.h>
 #include <WiFi101.h>
 
-char ssid[] = "HANABI";     //  your network SSID (name) 
+char ssid[] = "HANABI";     //  your network SSID (name)
 char pass[] = "lowernorwood";   // your network password
-WiFiClient  client; 
+WiFiClient  client;
 
 unsigned long myChannelNumber = 917504; //Put your channel number in here
 const char * myWriteAPIKey = "M28IML2BN9W8LV43"; //Put your API key in here
@@ -34,10 +36,7 @@ Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ80
 //------------------------------------------------------------------------------
 Adafruit_LSM9DS1 lsm = Adafruit_LSM9DS1();
 #define LSM9DS1_SCK A5
-// #define LSM9DS1_MISO 12
 #define LSM9DS1_MOSI A4
-// #define LSM9DS1_XGCS 6
-// #define LSM9DS1_MCS 5
 float offsetX = -0.139;
 float offsetY = 0.25;
 float offsetZ = -0.128;
@@ -56,8 +55,15 @@ const int ARDUINO_GPS_RX = 9; // GPS TX, Arduino RX pin
 const int ARDUINO_GPS_TX = 8; // GPS RX, Arduino TX pin
 //SoftwareSerial Serial2(ARDUINO_GPS_TX, ARDUINO_GPS_RX); // Create a SoftwareSerial
 //--------------------------------------------------------
+const float currentLat = 55.94565;
+const float currentLng = -3.19955;
 const float targetLat = 55.9456;
 const float targetLng = -3.1995;
+float lng = -3.19955;
+float lat = 55.94565;
+float heading ;
+float distance;
+
 //--------------------------------------------------------
 void setupSensor()
 {
@@ -77,16 +83,9 @@ void setup()
 {
   Serial.begin(4800);
   Serial2.begin(4800);
-  while (!Serial);
-  WiFi.setPins(8,7,4,2); // Setup the WiFi on the Feather boards
-  /* Start the WiFi connection */
-  Serial.println("Starting..."); 
-  Serial.println("Connecting to WiFi");  
-  int conn = WiFi.begin(ssid, pass);
-  if( conn == WL_CONNECTED )        { Serial.println("OK!");}
-  else if( conn == WL_IDLE_STATUS ) {Serial.println("Idle");}
-  else                              {Serial.println("Unknown response");}
-  /* Now connect to ThingSpeak */
+  //  while (!Serial);
+  setupWifi();
+  
   ThingSpeak.begin(client);
   Serial.println("Started");
   setupSensor();
@@ -107,9 +106,11 @@ void loop()
   {
     tinyGPS.encode(Serial2.read());
   }
-  //float ourHeading =  180.0f;
+  
+  updateGPS();
+  
+
   float ourHeading =  getHeading(m.magnetic.x - offsetX, m.magnetic.y - offsetY);
-  //  float targetHeading = 0.0f; // get heading from GPS
   float targetHeading = getTargetHeading(); // get heading from GPS
 
   Serial.print("Heading ");
@@ -120,10 +121,16 @@ void loop()
   //  setPixelToCompassDirection(ourHeading, pixels.Color(0,0,50));
   setPixelToCompassDirection(getHeadingDiff(ourHeading, targetHeading), pixels.Color(0, 120, 50));
   Serial.println(getHeadingDiff(ourHeading, targetHeading));
-  
+
   pixels.show();
   delay(1000);
   updateThingspeak();
+
+  while (!isWiFiConnected())
+  {
+    setupWifi();
+    delay(10000);
+  }
 }
 //------------------------------------------------------------------------------
 float getHeading(float mx, float my)

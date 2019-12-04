@@ -1,22 +1,15 @@
 void updateThingspeak()
 {
-    float lat = tinyGPS.location.lat();
-    ThingSpeak.setField(1,lat);
-    float lng = tinyGPS.location.lng();
-    ThingSpeak.setField(2,lng);
-    int resp = ThingSpeak.writeFields(WriteChannelNumber, myWriteAPIKey);
-    Serial.print("Current Location = ");
-    Serial.print(lat);
-    Serial.print(" , ");
-    Serial.println(lng);   
-}      
+  static unsigned long uploadTimer = 0;
+  if (millis() - uploadTimer > thingSpeakUpdateRate)
+  {    
+    ThingSpeak.setField(1, lat);    
+    ThingSpeak.setField(2, lng);
+    int resp = ThingSpeak.writeFields(WriteChannelNumber, myWriteAPIKey);   
+  }
+}
 void readThingspeak()
 {
-  long targetLat = ThingSpeak.readLongField(ReadChannelNumber, 1, myReadAPIKey);
-  long targetLng = ThingSpeak.readLongField(ReadChannelNumber, 2, myReadAPIKey);
-  Serial.print("target Location = ");
-  Serial.print(targetLat);
-  Serial.print(" , ");
-  Serial.println(targetLng);
+  targetLat = ThingSpeak.readFloatField(ReadChannelNumber, 1, myReadAPIKey);
+  targetLng = ThingSpeak.readFloatField(ReadChannelNumber, 2, myReadAPIKey);
 }
-
