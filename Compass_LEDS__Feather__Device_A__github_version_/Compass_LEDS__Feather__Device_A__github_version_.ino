@@ -61,8 +61,9 @@ void setup()
   pinPeripheral(11, PIO_SERCOM);
   Serial.begin(GPS_BAUD);
   Serial2.begin(GPS_BAUD);
-  
-  ThingSpeak.begin(client);
+
+  //  setupWifi();
+  //  ThingSpeak.begin(client);
   setupSensor();
   pixels.begin(); // This initializes the NeoPixel library.
 }
@@ -75,8 +76,8 @@ void loop()
   {
     tinyGPS.encode(Serial2.read());
   }
-  updateThisLatLng();
-  updateTargetLatLng();
+  //  updateThisLatLng();
+  //  updateTargetLatLng();
   //--------------------------------------------------------------------------
   // 9DOF
   lsm.read();
@@ -91,7 +92,7 @@ void loop()
   pixels.show();
   //--------------------------------------------------------------------------
   // ThingSpeak
-  updateThingspeak();
+  //  updateThingspeak();
   //--------------------------------------------------------------------------
   delay(1000);
 }
